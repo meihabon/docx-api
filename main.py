@@ -38,14 +38,35 @@ def extract_formatting(doc):
 
     # paragraph formatting (first paragraph sample)
     line_spacing = None
-    indent = None
+
+    indentation = {
+        "first_line_pt": None,
+        "left_pt": None,
+        "right_pt": None
+    }
 
     if doc.paragraphs:
         p = doc.paragraphs[0]
-        if p.paragraph_format.line_spacing:
-            line_spacing = p.paragraph_format.line_spacing
-        if p.paragraph_format.first_line_indent:
-            indent = p.paragraph_format.first_line_indent.pt
+        fmt = p.paragraph_format
+
+        # line spacing
+        if fmt.line_spacing:
+            try:
+                line_spacing = float(fmt.line_spacing)
+            except:
+                line_spacing = str(fmt.line_spacing)
+
+        # first line indent
+        if fmt.first_line_indent:
+            indentation["first_line_pt"] = fmt.first_line_indent.pt
+
+        # left indent
+        if fmt.left_indent:
+            indentation["left_pt"] = fmt.left_indent.pt
+
+        # right indent
+        if fmt.right_indent:
+            indentation["right_pt"] = fmt.right_indent.pt
 
     return {
         "margins": margins,
@@ -54,9 +75,8 @@ def extract_formatting(doc):
             "size_pt": font_size
         },
         "line_spacing": line_spacing,
-        "indentation_pt": indent
+        "indentation": indentation
     }
-
 
 @app.post("/convert-docx")
 async def convert_docx(file: UploadFile = File(...)):
