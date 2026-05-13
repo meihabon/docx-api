@@ -9,19 +9,22 @@ def extract_text(doc):
     return "\n".join([p.text for p in doc.paragraphs if p.text and p.text.strip()])
 
 
-def extract_font(doc):
-    font_name = None
-    font_size = None
+font_name = None
+font_size = None
 
-    for p in doc.paragraphs:
-        for r in p.runs:
-            if r.font and r.font.name:
-                font_name = r.font.name
-            if r.font and r.font.size:
-                font_size = r.font.size.pt
+for p in doc.paragraphs:
+    for r in p.runs:
+        if r.font.name:
+            font_name = r.font.name
 
-            if font_name and font_size:
-                return font_name, font_size
+        if r.font.size:
+            font_size = r.font.size.pt
+
+    if not font_name and p.style and p.style.font.name:
+        font_name = p.style.font.name
+
+    if not font_size and p.style and p.style.font.size:
+        font_size = p.style.font.size.pt
 
     return font_name, font_size
 
