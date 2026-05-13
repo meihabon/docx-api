@@ -9,31 +9,36 @@ def extract_text(doc):
     return "\n".join([p.text for p in doc.paragraphs if p.text and p.text.strip()])
 
 
-font_name = None
-font_size = None
+# ✅ FIXED FONT EXTRACTION
+def extract_font(doc):
+    font_name = None
+    font_size = None
 
-for p in doc.paragraphs:
-    for r in p.runs:
-        if r.font.name:
-            font_name = r.font.name
+    for p in doc.paragraphs:
+        for r in p.runs:
+            if r.font.name:
+                font_name = r.font.name
 
-        if r.font.size:
-            font_size = r.font.size.pt
+            if r.font.size:
+                font_size = r.font.size.pt
 
-    if not font_name and p.style and p.style.font.name:
-        font_name = p.style.font.name
+        # fallback to paragraph style
+        if not font_name and p.style and p.style.font.name:
+            font_name = p.style.font.name
 
-    if not font_size and p.style and p.style.font.size:
-        font_size = p.style.font.size.pt
+        if not font_size and p.style and p.style.font.size:
+            font_size = p.style.font.size.pt
 
     return font_name, font_size
 
 
+# ✅ FIXED LINE SPACING (more stable)
 def extract_line_spacing(paragraphs):
     values = []
 
-    for p in paragraphs[:10]:  # sample more than 1 paragraph
+    for p in paragraphs:
         fmt = p.paragraph_format
+
         if fmt.line_spacing is not None:
             try:
                 values.append(float(fmt.line_spacing))
@@ -49,7 +54,6 @@ def extract_formatting(doc):
     def pt(x):
         return x.pt if x else None
 
-    # margins
     margins = {
         "top_pt": pt(section.top_margin),
         "bottom_pt": pt(section.bottom_margin),
@@ -57,13 +61,11 @@ def extract_formatting(doc):
         "right_pt": pt(section.right_margin),
     }
 
-    # font (FIXED)
+    # ✅ FIXED CALL
     font_name, font_size = extract_font(doc)
 
-    # line spacing (FIXED)
     line_spacing = extract_line_spacing(doc.paragraphs)
 
-    # indentation (still sample-based but safer)
     indentation = {
         "first_line_pt": None,
         "left_pt": None,
@@ -106,12 +108,9 @@ async def convert_docx(file: UploadFile = File(...)):
     doc = Document(path)
 
     text = extract_text(doc)
-
     formatting = extract_formatting(doc)
-
     word_count = len(text.split())
 
-    # 🔴 IMPORTANT: detect if file is actually readable
     formatting_complete = all([
         formatting["font"]["name"] is not None,
         formatting["font"]["size_pt"] is not None,
